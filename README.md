@@ -26,7 +26,7 @@
 # 环境安装
 npm install request socket.io-client async
 
-# 修改账号 user_name｜密码 user_pwd｜频道 Channel｜副本 idteamScenesId
+# 修改账号 user_name｜密码 user_pwd｜频道 Channel｜副本id teamScenesId
 
 # run
 node ydxx_0.js
