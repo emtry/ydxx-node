@@ -1,8 +1,17 @@
+//version 1.1.0
 var user_name = "xxxxxxxx";
 var user_pwd = "xxxxxxxx";
 
-var Channel = 0;
-var teamScenesId = '5dc2206202642143f1c1ff3b';
+var Channel = 1; //频道
+var teamScenesId = '5dc2206202642143f1c1ff3b'; //副本id
+
+var daily = 1; //是否自动每日
+var teamScenesIds = [ //每日副本id
+    '5df83ba4a376bd471f9379c3',
+    '5df751dabd91436e744c2b60',
+    '5df3089eb0708370b73f368e',
+    '5df30383af0ec237e0bfd839',
+]
 // 云顶封神塔 => 5dfed126016232536617c5e0
 // 密林      => 5dbfd22d4a3e3d2784a6a670
 // 密林深处  => 5dbfd30d4a3e3d2784a6a677
@@ -26,7 +35,7 @@ const io = require('socket.io-client');
 const async = require('async');
 
 
-request.post({
+request.post({ //登录
     url: 'http://joucks.cn:3344/api/login',
     form: {
         user_name: user_name,
@@ -34,9 +43,9 @@ request.post({
     }
 }, function(error, response, body) {
     if (!error && response.statusCode == 200) {
-        var cookie = response.headers['set-cookie'];
+        var cookie = response.headers['set-cookie']; //获取cookie
     }
-    request({
+    request({ //获取个人信息
         url: 'http://joucks.cn:3344/api/getUserInfo',
         headers: {
             Cookie: cookie,
@@ -55,49 +64,82 @@ request.post({
         }
 
         let socket;
-        var connurl = ["http://joucks.cn:3356", "http://joucks.cn:3358"];
-        socket = io.connect(connurl[Channel], {
+        var connurl = ["", "http://joucks.cn:3356", "http://joucks.cn:3358"]; //频道地址
+        socket = io.connect(connurl[Channel], { //连接频道
             'force new connection': true,
             'query': 'uid=' + uid + "&token=" + token
         });
-        socket.on('disconnect', function(reason) {
-            console.log("你与服务器断开连接");
+
+        socket.on('disconnect', function(reason) { //掉线重连
+            console.log("你与服务器断开连接!");
+            console.log("尝试重新连接...");
+            autoBattle(teamScenesId);
         });
+
+        var i = 1;
         socket.on("team", function(res) {
-            console.log(res.msg);
-            if (res.msg.indexOf('战斗') != -1) {
-                setTimeout(function() {
-                    socket.emit('startPeril', { type: 2, uid, token });
-                }, 5000)
+            if (res.type == "currentTeamDisband") { //退队后重新开始战斗
+                autoBattle(teamScenesId);
+            } else if (res.type == "msg") {
+                if (res.msg == "你还没有队伍！") {
+
+                } else if (res.msg.indexOf('战斗') != -1) { //未结束战斗，重新发起战斗
+                    console.log(res.msg);
+                    setTimeout(function() {
+                        socket.emit('startPeril', { type: 2, uid, token });
+                    }, 5000)
+                } else if (res.msg.indexOf('上限') != -1) { //自动切换每日副本
+                    if (i < teamScenesIds.length) {
+                        autoBattle(teamScenesIds[i]);
+                        i++;
+                    } else {
+                        autoBattle(teamScenesId); //完成日常继续刷自定义副本
+                    }
+                } else {
+                    console.log(res.msg);
+                }
             }
         });
+
         socket.on("battleEnd", function(res) {
             if (res.data.win == 1) {
-                res.data.users[0].goods.forEach(element => console.log(element.name));
+                res.data.users[0].goods.forEach(element => console.log(element.name)); //输出掉落物品
             } else {
                 console.log("惜败死亡～");
             }
             setTimeout(function() {
-                socket.emit('startPeril', { type: 2, uid, token });
+                socket.emit('startPeril', { type: 2, uid, token }); //发起战斗
             }, 5000)
 
         });
 
 
+        if (daily == 0) { //判断是否每日
+            autoBattle(teamScenesId);
+        } else if (daily == 1) {
+            autoBattle(teamScenesIds[0]);
+        }
+
+        setInterval(function() { //每隔5分钟检测是否需要吃药
+            pill();
+        }, 300000)
+    });
+
+    function autoBattle(teamScenesId) { //自动战斗
         async.series(
             [
-                function(callback) {
+                function(callback) { //离开队伍
                     socket.emit('leaveTeam', { uid, token });
                     callback();
                 },
                 function(callback) {
-                    setTimeout(function() {
+                    setTimeout(function() { //创建队伍
                         socket.emit('createdTeam', { teamScenesId, level: [0, 300], pwd: '', uid, token });
                         callback()
                     }, 2000)
                 },
                 function(callback) {
-                    setTimeout(function() {
+                    setTimeout(function() { //开始战斗
                         socket.emit('startPeril', { type: 2, uid, token });
                         callback()
                     }, 2000)
@@ -105,14 +147,10 @@ request.post({
             ],
             function(err, results) {}
         )
+    }
 
-        setInterval(function() {
-            pill();
-        }, 300000)
-    });
-
-    function pill() {
-        request({
+    function pill() { //自动吃药
+        request({ //查询剩余体力
             url: 'http://joucks.cn:3344/api/getUserInfo',
             headers: {
                 Cookie: cookie,
@@ -120,11 +158,11 @@ request.post({
         }, function(error, response, body) {
             if (!error && response.statusCode == 200) {
                 var info = JSON.parse(body);
-                if (info.data.user.health_num <= 10000) {
-                    request.post({
+                if (info.data.user.health_num <= 10000) { //判断体力是否低于10000
+                    request.post({ //自动买红药水
                         url: 'http://joucks.cn:3344/api/byGoodsToMyUser',
                         form: {
-                            gid: '5dbfcc8cd9b8c0272471e2bf',
+                            gid: '5dbfcc8cd9b8c0272471e2bf', //红药水商店id
                         },
                         headers: {
                             Cookie: cookie,
@@ -133,7 +171,7 @@ request.post({
                         if (!error && response.statusCode == 200) {
                             var msg = JSON.parse(body).msg;
                             if (msg == 'success') {
-                                request({
+                                request({ //查询红药水背包id
                                     url: 'http://joucks.cn:3344/api/getUserGoods?tid=all&page=1',
                                     headers: {
                                         Cookie: cookie,
@@ -141,14 +179,14 @@ request.post({
                                 }, function(error, response, body) {
                                     if (!error && response.statusCode == 200) {
                                         var msg = JSON.parse(body);
-                                        var pill_id;
+                                        var pill_id; //红药水背包id
                                         if (msg.msg == 'success') {
                                             msg.data.forEach(element => {
                                                 if (element.goods_type == '5db663e94682c55675893091' && element.level == 6) {
                                                     pill_id = element._id;
                                                 }
                                             });
-                                            request.post({
+                                            request.post({ //吃红药水
                                                 url: 'http://joucks.cn:3344/api/useGoodsToUser',
                                                 form: {
                                                     ugid: pill_id,
