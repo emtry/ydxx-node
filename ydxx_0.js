@@ -1,9 +1,10 @@
-//version 1.1.0
+//version 1.2.2
 var user_name = "xxxxxxxx";
 var user_pwd = "xxxxxxxx";
 
 var Channel = 1; //频道
 var teamScenesId = '5dc2206202642143f1c1ff3b'; //副本id
+var pwd = ''; //房间密码
 
 var daily = 1; //是否自动每日
 var teamScenesIds = [ //每日副本id
@@ -11,7 +12,11 @@ var teamScenesIds = [ //每日副本id
     '5df751dabd91436e744c2b60',
     '5df3089eb0708370b73f368e',
     '5df30383af0ec237e0bfd839',
-]
+];
+
+var teamId = ''; //指定用户uid，加入其队伍（此值不为空时，不会自动战斗与自动每日，听队长安排）
+var tpwd = ''; //房间密码
+
 // 云顶封神塔 => 5dfed126016232536617c5e0
 // 密林      => 5dbfd22d4a3e3d2784a6a670
 // 密林深处  => 5dbfd30d4a3e3d2784a6a677
@@ -87,10 +92,10 @@ request.post({ //登录
                     console.log(res.msg);
                     setTimeout(function() {
                         socket.emit('startPeril', { type: 2, uid, token });
-                    }, 5000)
+                    }, 2000)
                 } else if (res.msg.indexOf('上限') != -1) { //自动切换每日副本
                     if (i < teamScenesIds.length) {
-                        autoBattle(teamScenesIds[i]);
+                        changeteamScenesId(teamScenesIds[i]);
                         i++;
                     } else {
                         autoBattle(teamScenesId); //完成日常继续刷自定义副本
@@ -109,16 +114,21 @@ request.post({ //登录
             }
             setTimeout(function() {
                 socket.emit('startPeril', { type: 2, uid, token }); //发起战斗
-            }, 5000)
+            }, (res.data.end_combatsid_at * 3 + 2) * 1000)
 
         });
 
 
-        if (daily == 0) { //判断是否每日
-            autoBattle(teamScenesId);
-        } else if (daily == 1) {
-            autoBattle(teamScenesIds[0]);
+        if (teamId == '') {
+            if (daily == 0) { //判断是否每日
+                autoBattle(teamScenesId);
+            } else if (daily == 1) {
+                autoBattle(teamScenesIds[0]);
+            }
+        } else {
+            applyTeam();
         }
+
 
         setInterval(function() { //每隔5分钟检测是否需要吃药
             pill();
@@ -141,6 +151,42 @@ request.post({ //登录
                 function(callback) {
                     setTimeout(function() { //开始战斗
                         socket.emit('startPeril', { type: 2, uid, token });
+                        callback()
+                    }, 2000)
+                }
+            ],
+            function(err, results) {}
+        )
+    }
+
+    function changeteamScenesId(teamScenesId) { //切换副本
+        async.series(
+            [
+                function(callback) { //切换副本
+                    socket.emit('updateTeamScenes', { teamScenesId, uid, token });
+                    callback()
+                },
+                function(callback) {
+                    setTimeout(function() { //开始战斗
+                        socket.emit('startPeril', { type: 2, uid, token });
+                        callback()
+                    }, 2000)
+                }
+            ],
+            function(err, results) {}
+        )
+    }
+
+    function applyTeam() { //加入队伍
+        async.series(
+            [
+                function(callback) { //离开队伍
+                    socket.emit('leaveTeam', { uid, token });
+                    callback();
+                },
+                function(callback) {
+                    setTimeout(function() { //加入队伍
+                        socket.emit('applyTeam', { teamId, tpwd, uid, token });
                         callback()
                     }, 2000)
                 }
