@@ -1,4 +1,4 @@
-//version 1.2.2
+//version 1.2.3
 var user_name = "xxxxxxxx";
 var user_pwd = "xxxxxxxx";
 
@@ -98,7 +98,7 @@ request.post({ //登录
                         changeteamScenesId(teamScenesIds[i]);
                         i++;
                     } else {
-                        autoBattle(teamScenesId); //完成日常继续刷自定义副本
+                        changeteamScenesId(teamScenesId); //完成日常继续刷自定义副本
                     }
                 } else {
                     console.log(res.msg);
@@ -145,13 +145,13 @@ request.post({ //登录
                 function(callback) {
                     setTimeout(function() { //创建队伍
                         socket.emit('createdTeam', { teamScenesId, level: [0, 300], pwd: '', uid, token });
-                        callback()
+                        callback();
                     }, 2000)
                 },
                 function(callback) {
                     setTimeout(function() { //开始战斗
                         socket.emit('startPeril', { type: 2, uid, token });
-                        callback()
+                        callback();
                     }, 2000)
                 }
             ],
