@@ -1,4 +1,4 @@
-//version 1.2.3
+//version 1.2.4
 var user_name = "xxxxxxxx";
 var user_pwd = "xxxxxxxx";
 
@@ -78,13 +78,13 @@ request.post({ //登录
         socket.on('disconnect', function(reason) { //掉线重连
             console.log("你与服务器断开连接!");
             console.log("尝试重新连接...");
-            autoBattle(teamScenesId);
+            main();
         });
 
         var i = 1;
         socket.on("team", function(res) {
             if (res.type == "currentTeamDisband") { //退队后重新开始战斗
-                autoBattle(teamScenesId);
+                main();
             } else if (res.type == "msg") {
                 if (res.msg == "你还没有队伍！") {
 
@@ -118,7 +118,14 @@ request.post({ //登录
 
         });
 
+        main();
 
+        setInterval(function() { //每隔5分钟检测是否需要吃药
+            pill();
+        }, 300000)
+    });
+
+    function main() {
         if (teamId == '') {
             if (daily == 0) { //判断是否每日
                 autoBattle(teamScenesId);
@@ -128,12 +135,7 @@ request.post({ //登录
         } else {
             applyTeam();
         }
-
-
-        setInterval(function() { //每隔5分钟检测是否需要吃药
-            pill();
-        }, 300000)
-    });
+    }
 
     function autoBattle(teamScenesId) { //自动战斗
         async.series(
