@@ -1,43 +1,43 @@
-//version 1.2.4
+//version 1.2.5
 var user_name = "xxxxxxxx";
-var user_pwd = "xxxxxxxx";
+var user_pwd = "yyyyyyyy";
 
 var Channel = 1; //频道
-var teamScenesId = '5dc2206202642143f1c1ff3b'; //副本id
-var pwd = ''; //房间密码
+var teamScenesId = 荒漠深渊; //自动副本
+var pwd = ''; //创建房间密码
 
 var daily = 1; //是否自动每日
-var teamScenesIds = [ //每日副本id
-    '5df83ba4a376bd471f9379c3',
-    '5df751dabd91436e744c2b60',
-    '5df3089eb0708370b73f368e',
-    '5df30383af0ec237e0bfd839',
+var teamScenesIds = [ //每日副本
+    巫山禁地,
+    望天月洞,
+    孟婆桥边,
+    梦魂之地,
 ];
 
 var teamId = ''; //指定用户uid，加入其队伍（此值不为空时，不会自动战斗与自动每日，听队长安排）
-var tpwd = ''; //房间密码
-
-// 云顶封神塔 => 5dfed126016232536617c5e0
-// 密林      => 5dbfd22d4a3e3d2784a6a670
-// 密林深处  => 5dbfd30d4a3e3d2784a6a677
-// 迷雾森林  => 5dbfd64d136bf0278c32fc9b
-// 森林浅滩  => 5dbfd7a41faa012803f535b3
-// 郊外海滩  => 5dc06a86ca32072ec8212dc3
-// 海边草原  => 5dc0711aca32072ec8212e06
-// 梦魂之地  => 5df30383af0ec237e0bfd839
-// 孟婆桥边  => 5df3089eb0708370b73f368e
-// 孤凉荒漠  => 5dc07656ca32072ec8212e2f
-// 荒漠深郊  => 5dc12f06dbd89e3e17f51702
-// 望天月洞  => 5df751dabd91436e744c2b60
-// 荒漠深渊  => 5dc2206202642143f1c1ff3b
-// 巫山禁地  => 5df83ba4a376bd471f9379c3
-// 荒漠天坑  => 5dc28f4747919f53d428b845
+var tpwd = ''; //加入房间密码
 
 
 //=================================================================================================
 const request = require('request');
 const io = require('socket.io-client');
 const async = require('async');
+
+var 密林 = '5dbfd22d4a3e3d2784a6a670';
+var 密林深处 = '5dbfd30d4a3e3d2784a6a677';
+var 迷雾森林 = '5dbfd64d136bf0278c32fc9b';
+var 森林浅滩 = '5dbfd7a41faa012803f535b3';
+var 郊外海滩 = '5dc06a86ca32072ec8212dc3';
+var 海边草原 = '5dc0711aca32072ec8212e06';
+var 梦魂之地 = '5df30383af0ec237e0bfd839';
+var 孟婆桥边 = '5df3089eb0708370b73f368e';
+var 孤凉荒漠 = '5dc07656ca32072ec8212e2f';
+var 荒漠深郊 = '5dc12f06dbd89e3e17f51702';
+var 望天月洞 = '5df751dabd91436e744c2b60';
+var 荒漠深渊 = '5dc2206202642143f1c1ff3b';
+var 巫山禁地 = '5df83ba4a376bd471f9379c3';
+var 荒漠天坑 = '5dc28f4747919f53d428b845';
+var 云顶封神塔 = '5dfed126016232536617c5e0';
 
 
 request.post({ //登录
@@ -58,8 +58,8 @@ request.post({ //登录
     }, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var info = JSON.parse(body);
-            var token = info.data.user.token;
-            var uid = info.data.user._id;
+            var token = info.data.user.token; //获取token
+            var uid = info.data.user._id; //获取用户uid
             console.log("昵称: " + info.data.user.nickname);
             console.log("等级: " + info.data.user.level);
             console.log("修为: " + info.data.user.repair_num);
@@ -126,14 +126,14 @@ request.post({ //登录
     });
 
     function main() {
-        if (teamId == '') {
+        if (teamId == '') { //判断是否加入队伍
             if (daily == 0) { //判断是否每日
-                autoBattle(teamScenesId);
+                autoBattle(teamScenesId); //自动战斗
             } else if (daily == 1) {
-                autoBattle(teamScenesIds[0]);
+                autoBattle(teamScenesIds[0]); //每日
             }
         } else {
-            applyTeam();
+            applyTeam(); //加入队伍
         }
     }
 
