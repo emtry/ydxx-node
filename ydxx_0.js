@@ -1,23 +1,37 @@
-//version 1.2.5
+//version 1.2.6
 var user_name = "xxxxxxxx";
 var user_pwd = "yyyyyyyy";
 
 var Channel = 1; //频道
-var teamScenesId = 荒漠深渊; //自动副本
+var teamScenesId = '5dc2206202642143f1c1ff3b'; //自动副本
 var pwd = ''; //创建房间密码
 
 var daily = 1; //是否自动每日
 var teamScenesIds = [ //每日副本
-    巫山禁地,
-    望天月洞,
-    孟婆桥边,
-    梦魂之地,
+    '5dc28f4747919f53d428b845',
+    '5df751dabd91436e744c2b60',
+    '5df3089eb0708370b73f368e',
+    '5df30383af0ec237e0bfd839',
 ];
 
 var teamId = ''; //指定用户uid，加入其队伍（此值不为空时，不会自动战斗与自动每日，听队长安排）
 var tpwd = ''; //加入房间密码
 
-
+// 云顶封神塔 => 5dfed126016232536617c5e0
+// 密林      => 5dbfd22d4a3e3d2784a6a670
+// 密林深处  => 5dbfd30d4a3e3d2784a6a677
+// 迷雾森林  => 5dbfd64d136bf0278c32fc9b
+// 森林浅滩  => 5dbfd7a41faa012803f535b3
+// 郊外海滩  => 5dc06a86ca32072ec8212dc3
+// 海边草原  => 5dc0711aca32072ec8212e06
+// 梦魂之地  => 5df30383af0ec237e0bfd839
+// 孟婆桥边  => 5df3089eb0708370b73f368e
+// 孤凉荒漠  => 5dc07656ca32072ec8212e2f
+// 荒漠深郊  => 5dc12f06dbd89e3e17f51702
+// 望天月洞  => 5df751dabd91436e744c2b60
+// 荒漠深渊  => 5dc2206202642143f1c1ff3b
+// 巫山禁地  => 5df83ba4a376bd471f9379c3
+// 荒漠天坑  => 5dc28f4747919f53d428b845
 //=================================================================================================
 const request = require('request');
 const io = require('socket.io-client');
@@ -40,6 +54,8 @@ var 荒漠天坑 = '5dc28f4747919f53d428b845';
 var 云顶封神塔 = '5dfed126016232536617c5e0';
 
 
+let socket;
+var uid, token;
 request.post({ //登录
     url: 'http://joucks.cn:3344/api/login',
     form: {
@@ -58,8 +74,8 @@ request.post({ //登录
     }, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var info = JSON.parse(body);
-            var token = info.data.user.token; //获取token
-            var uid = info.data.user._id; //获取用户uid
+            token = info.data.user.token; //获取token
+            uid = info.data.user._id; //获取用户uid
             console.log("昵称: " + info.data.user.nickname);
             console.log("等级: " + info.data.user.level);
             console.log("修为: " + info.data.user.repair_num);
@@ -68,7 +84,6 @@ request.post({ //登录
             console.log("精力: " + info.data.user.energy_num);
         }
 
-        let socket;
         var connurl = ["", "http://joucks.cn:3356", "http://joucks.cn:3358"]; //频道地址
         socket = io.connect(connurl[Channel], { //连接频道
             'force new connection': true,
@@ -114,7 +129,7 @@ request.post({ //登录
             }
             setTimeout(function() {
                 socket.emit('startPeril', { type: 2, uid, token }); //发起战斗
-            }, (res.data.end_combatsid_at * 3 + 2) * 1000)
+            }, (res.data.end_combatsid_at + 2) * 1000)
 
         });
 
@@ -147,6 +162,7 @@ request.post({ //登录
                 function(callback) {
                     setTimeout(function() { //创建队伍
                         socket.emit('createdTeam', { teamScenesId, level: [0, 300], pwd: '', uid, token });
+
                         callback();
                     }, 2000)
                 },
