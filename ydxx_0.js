@@ -1,4 +1,4 @@
-//version 1.2.7
+﻿//version 1.2.8
 var user_name = "xxxxxxxx";
 var user_pwd = "yyyyyyyy";
 
@@ -9,7 +9,7 @@ var min_level = 50; //进队最小等级
 
 var daily = 1; //是否自动每日
 var teamScenesIds = [ //每日副本
-    '5dc28f4747919f53d428b845',
+    //'5dc28f4747919f53d428b845',
     '5df751dabd91436e744c2b60',
     '5df3089eb0708370b73f368e',
     '5df30383af0ec237e0bfd839',
@@ -141,9 +141,16 @@ request.post({ //登录
 
         main();
 
+        tree();
+        setInterval(function() { //神数脱落
+            tree();
+        }, 61000)
+
+        pill();
         setInterval(function() { //每隔5分钟检测是否需要吃药
             pill();
         }, 300000)
+
     });
 
     function main() {
@@ -219,6 +226,21 @@ request.post({ //登录
             ],
             function(err, results) {}
         )
+    }
+
+    function tree() { //灵树
+        request({ //查询剩余体力
+            url: 'http://joucks.cn:3344/api/getGoodsBySystem',
+            headers: {
+                Cookie: cookie,
+            },
+        }, function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                if (JSON.parse(body).data != null) {
+                    console.log(new Date().toLocaleTimeString() + ": 神数脱落【" + JSON.parse(body).data.name + "】");
+                }
+            }
+        });
     }
 
     function pill() { //自动吃药
