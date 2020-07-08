@@ -1,7 +1,8 @@
 # ydxx-node
 《云顶修仙》Node.js挂机脚本
 
-浏览器版本地址：http://yundingxx.com:3344（1.0已停服）
+浏览器版本地址：http://yundingxx.com:3344
+1.0已停服，暂停维护
 
 ### 生产环境
 
